@@ -3,12 +3,13 @@ import java.nio.file.*;
 import java.util.stream.Stream;
 
 public class StretchTester {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws Exception {
         // System.out.println(verify());
         // System.out.println(cleanup());
-        System.out.println(Git.createGitRepository());
-        System.out.println(verify());
+        // System.out.println(Git.createGitRepository());
+        // System.out.println(verify());
         // System.out.println(cleanup());
+        System.out.println(Git.generateShaOne("priscilla.txt"));
     }
 
     public static boolean verify() {
@@ -57,5 +58,5 @@ public class StretchTester {
         stream.close();
     }
 
-    
+
 }
