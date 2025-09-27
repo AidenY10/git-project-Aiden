@@ -9,7 +9,10 @@ public class StretchTester {
         // System.out.println(Git.createGitRepository());
         // System.out.println(verify());
         // System.out.println(cleanup());
-        System.out.println(Git.generateShaOne("priscilla.txt"));
+        System.out.println(Git.createBlob("Priscilla.txt"));
+        System.out.println(Git.createBlob("Aiden.txt"));
+        System.out.println(Git.createBlob("AlsoPriscilla.txt"));
+        System.out.println(resetAidenPriscillaBlob());
     }
 
     public static boolean verify() {
@@ -59,4 +62,24 @@ public class StretchTester {
     }
 
 
+    public static boolean checkIfBlobExists(String hash) {
+        Path p = Path.of("git/objects/" + hash);
+        return Files.isRegularFile(p);
+    }
+
+    public static boolean resetAidenPriscillaBlob() throws IOException {
+        if (checkIfBlobExists("f07609351393d43cb2ce86b263720721c69e4d15")) { //priscilla
+            Path p = Path.of("git/objects/f07609351393d43cb2ce86b263720721c69e4d15");
+            Files.delete(p);
+        } else {
+            return false;
+        }
+        if (checkIfBlobExists("1faf1e8390cdac9204f160c35828cc423b7acd7b")) { //aiden
+             Path p = Path.of("git/objects/1faf1e8390cdac9204f160c35828cc423b7acd7b");
+            Files.delete(p);
+        } else {
+            return false;
+        }
+        return true;
+    }
 }
