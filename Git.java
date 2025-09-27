@@ -8,7 +8,7 @@ public class Git {
     public static void main(String[] args) throws IOException {
         createGitRepository();
     }
-    
+
     public static boolean createGitRepository() throws IOException {
         File git = new File("git");
         if (!git.exists()) {
@@ -24,9 +24,9 @@ public class Git {
         }
         System.out.println("Git Repository Already Exists");
         return false;
-    } 
+    }
 
-    public static String generateShaOne(String path) throws Exception {
+    public static String generateShaOne(String path) throws Exception { // www.baeldung.com/sha-256-hashing-java
         File file = new File(path);
         if (!file.exists()) {
             throw new IOException("File not found");
@@ -55,7 +55,7 @@ public class Git {
         }
         return null;
     }
-    
+
     private static String bytesToHex(byte[] hash) { // https://www.baeldung.com/sha-256-hashing-java
         StringBuilder hexString = new StringBuilder(2 * hash.length);
         for (int i = 0; i < hash.length; i++) {
@@ -79,5 +79,22 @@ public class Git {
             return true;
         }
         return false;
+    }
+
+    public static boolean createBlob(String pathStr) throws Exception {
+        Path input = Path.of(pathStr);
+        String contents = Files.readString(input);
+        String blobStr = "git/objects/temp";
+        Path blob = Path.of(blobStr);
+        Files.createFile(blob);
+        Files.writeString(blob, contents);
+        String hash = generateShaOne(blobStr);
+        Path renamed = Path.of("git/objects/" + hash);
+        if (Files.isRegularFile(renamed)) {
+            Files.delete(blob);
+            return false;
+        }
+        Files.move(blob, renamed);
+        return true;
     }
 }
