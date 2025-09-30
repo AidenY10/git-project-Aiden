@@ -3,6 +3,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.nio.file.StandardOpenOption;
 
 public class Git {
     public static void main(String[] args) throws IOException {
@@ -92,9 +93,26 @@ public class Git {
         Path renamed = Path.of("git/objects/" + hash);
         if (Files.isRegularFile(renamed)) {
             Files.delete(blob);
+            addToIndex(hash, pathStr);
             return false;
         }
         Files.move(blob, renamed);
+        addToIndex(hash, pathStr);
+        return true;
+    }
+
+    public static boolean addToIndex(String hash, String original) throws IOException {
+        Path p = Path.of("git/index");
+        if (Files.size(p) != 0) {
+            Files.writeString(p, "\n", StandardOpenOption.APPEND);
+        }
+        Files.writeString(p, hash + " " + original, StandardOpenOption.APPEND);
+        return true;
+    }
+
+    public static boolean fullReset() throws IOException {
+        StretchTester.cleanup();
+        createGitRepository();
         return true;
     }
 }
