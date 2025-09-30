@@ -93,6 +93,7 @@ public class Git {
         Path renamed = Path.of("git/objects/" + hash);
         if (Files.isRegularFile(renamed)) {
             Files.delete(blob);
+            addToIndex(hash, pathStr);
             return false;
         }
         Files.move(blob, renamed);
