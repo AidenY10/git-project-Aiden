@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
+import java.util.stream.Stream;
 
 public class Git {
     public static void main(String[] args) throws IOException {
@@ -103,6 +105,28 @@ public class Git {
 
     public static boolean addToIndex(String hash, String original) throws IOException {
         Path p = Path.of("git/index");
+        List<String> allLines = Files.readAllLines(p);
+        int counter = 0;
+        int found = -1;
+        for (String str : allLines) {
+            int index = str.indexOf(original);
+            if (index == -1) {
+                counter++;
+            } else {
+                found = counter;
+                break;
+            }
+        }
+        if (found != -1) {
+            allLines.remove(found);
+            Files.writeString(p, "");
+            for (int i = 0; i < allLines.size(); i++) {
+                if (Files.size(p) != 0) {
+                    Files.writeString(p, "\n", StandardOpenOption.APPEND);
+                }
+                Files.writeString(p, allLines.get(i), StandardOpenOption.APPEND);
+            }
+        }
         if (Files.size(p) != 0) {
             Files.writeString(p, "\n", StandardOpenOption.APPEND);
         }
@@ -114,5 +138,43 @@ public class Git {
         StretchTester.cleanup();
         createGitRepository();
         return true;
+    }
+
+    public static String createTree(String path) throws Exception {
+        return createTree(path, 0);
+    }
+
+    public static String createTree(String path, int tempCount) throws Exception {
+        Path parameterPath = Path.of(path);
+        Stream<Path> stream = Files.walk(parameterPath);
+        boolean isFirst = true;
+        Path treePath = Path.of("git/objects/temporary" + String.valueOf(tempCount));
+        Files.createFile(treePath);
+        for (Path p : (Iterable<Path>) stream::iterator) {
+            if (isFirst) {
+                isFirst = false;
+                continue;
+            }
+            if (Files.isDirectory(p)) {
+                tempCount++;
+                String workingSha = createTree(p.toString(), tempCount);
+                if (Files.size(treePath) != 0) {
+                    Files.writeString(treePath, "\n", StandardOpenOption.APPEND);
+                }
+                Files.writeString(treePath, "tree " + generateShaOne(workingSha) + " " + p.toString(),
+                        StandardOpenOption.APPEND);
+            } else {
+                if (Files.size(treePath) != 0) {
+                    Files.writeString(treePath, "\n", StandardOpenOption.APPEND);
+                }
+                Files.writeString(treePath, "blob " + generateShaOne(p.toString()) + " " + p.toString(),
+                        StandardOpenOption.APPEND);
+                createBlob(p.toString());
+            }
+        }
+        stream.close();
+        String shaOne = generateShaOne(treePath.toString());
+        Files.move(treePath, Path.of("git/objects/" + shaOne));
+        return shaOne;
     }
 }

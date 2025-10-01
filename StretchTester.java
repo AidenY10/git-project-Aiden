@@ -9,15 +9,15 @@ public class StretchTester {
         // System.out.println(Git.createGitRepository());
         // System.out.println(verify());
         // System.out.println(cleanup());
-        System.out.println(Git.createBlob("Priscilla.txt"));
-        System.out.println(Git.createBlob("Aiden.txt"));
-        System.out.println(Git.createBlob("AlsoPriscilla.txt"));
-        System.out.println(readIndex());
+        // System.out.println(Git.createBlob("Priscilla.txt"));
+        // System.out.println(Git.createBlob("Aiden.txt"));
+        // System.out.println(Git.createBlob("AlsoPriscilla.txt"));
+        // System.out.println(readIndex());
         // deleteIndex();
         // System.out.println(readIndex());
         // System.out.println(resetAidenPriscillaBlob());
-        // System.out.println(Git.fullReset());
-
+        System.out.println(Git.fullReset());
+        Git.createTree("RootFolder");
     }
 
     public static boolean verify() {
