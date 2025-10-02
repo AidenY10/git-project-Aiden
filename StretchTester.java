@@ -16,8 +16,10 @@ public class StretchTester {
         // deleteIndex();
         // System.out.println(readIndex());
         // System.out.println(resetAidenPriscillaBlob());
-        System.out.println(Git.fullReset());
-        Git.createTree("RootFolder");
+        // Git.fullReset();
+        // Git.createTree("nfl");
+        Git.generateWorkingList();
+        // System.out.println(Git.readFile("git/objects/workinglist"));
     }
 
     public static boolean verify() {
