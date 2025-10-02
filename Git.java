@@ -4,6 +4,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.nio.file.StandardOpenOption;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -146,13 +148,30 @@ public class Git {
 
     public static String createTree(String path, int tempCount) throws Exception {
         Path parameterPath = Path.of(path);
-        Stream<Path> stream = Files.walk(parameterPath);
+        // Stream<Path> streamOne = Files.walk(parameterPath);
+        // for (Path p : (Iterable<Path>) streamOne::iterator) {
+        //     if (checkPath(path, p.toString())) {
+        //         continue;
+        //     }
+        //     System.out.println(p.toString());
+        // }
+        // System.out.println(" ");
+        // streamOne.close();
+        // return "";
+        Stream<Path> streamTwo = Files.walk(parameterPath);
         boolean isFirst = true;
         Path treePath = Path.of("git/objects/temporary" + String.valueOf(tempCount));
         Files.createFile(treePath);
-        for (Path p : (Iterable<Path>) stream::iterator) {
+        for (Path p : (Iterable<Path>) streamTwo::iterator) {
             if (isFirst) {
                 isFirst = false;
+                continue;
+            }
+            String dsStr = p.toString();
+            if (dsStr.indexOf("DS_Store") != -1) {
+                continue;
+            }
+            if (checkPath(path, dsStr)) {
                 continue;
             }
             if (Files.isDirectory(p)) {
@@ -161,7 +180,7 @@ public class Git {
                 if (Files.size(treePath) != 0) {
                     Files.writeString(treePath, "\n", StandardOpenOption.APPEND);
                 }
-                Files.writeString(treePath, "tree " + generateShaOne(workingSha) + " " + p.toString(),
+                Files.writeString(treePath, "tree " + generateShaOne("git/objects/" + workingSha) + " " + p.toString(),
                         StandardOpenOption.APPEND);
             } else {
                 if (Files.size(treePath) != 0) {
@@ -172,9 +191,57 @@ public class Git {
                 createBlob(p.toString());
             }
         }
-        stream.close();
+        // streamOne.close();
+        streamTwo.close();
         String shaOne = generateShaOne(treePath.toString());
         Files.move(treePath, Path.of("git/objects/" + shaOne));
         return shaOne;
+    }
+
+    public static boolean checkPath(String enclose, String inside) {
+        try {
+            inside = inside.substring(enclose.length() + 1);
+            return (inside.indexOf("/") != -1);
+        } catch (StringIndexOutOfBoundsException e) {
+            return false;
+        }
+    }
+
+    public static boolean generateWorkingList() throws Exception {
+        // List<String> entireIndex = Files.readAllLines(Path.of("git/index"));
+        // for (int i = 0; i < entireIndex.size(); i++) {
+        //     entireIndex.set(i, entireIndex.get(i) + "|" + i);
+        // }
+        // ArrayList<String> fileNames = new ArrayList<String>();
+        // for (String s : entireIndex) {
+        //     fileNames.add(s.substring(s.indexOf(" ") + 1));
+        // }
+        // Collections.sort(fileNames); //Rn entireIndex is "hash + name + |index" and FileNames is sorted "name + |index"
+        // for (int i = 0; i < fileNames.size(); i++) {
+        //     String line = fileNames.get(i);
+        //     int ogIndex = Integer.parseInt(line.substring(line.indexOf("|") + 1));
+        //     line = line.substring(0, line.indexOf("|"));
+        //     String hash = entireIndex.get(ogIndex).substring(0, entireIndex.get(ogIndex).indexOf(" "));
+        //     fileNames.set(i, "blob " + hash + " " + line);
+        // }
+        // Path p = Path.of("git/objects/workinglist");
+        // Files.createFile(p);
+        // for (String s : fileNames) {
+        //     if (Files.size(p) != 0) {
+        //         Files.writeString(p, "\n", StandardOpenOption.APPEND);
+        //     }
+        //     Files.writeString(p, s, StandardOpenOption.APPEND);
+        // }
+        List<String> all = Files.readAllLines(Path.of("git/index"));
+        String first = all.get(0);
+        first = first.substring(first.indexOf(" ") + 1, first.indexOf("/"));
+        Path p = Path.of("git/objects/workinglist");
+        Files.createFile(p);
+        Files.writeString(p, "tree " + createTree(first) + " (root)");
+        return true;
+    }
+
+    public static String readFile(String path) throws IOException {
+        return Files.readString(Path.of(path));
     }
 }
