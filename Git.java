@@ -1,5 +1,6 @@
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -143,10 +144,18 @@ public class Git {
     }
 
     public static String createTree(String path) throws Exception {
-        return createTree(path, 0);
+        return createTree(path, 0, false);
     }
 
     public static String createTree(String path, int tempCount) throws Exception {
+        return createTree(path, tempCount, false);
+    }
+
+    public static String createTree(String path, boolean working) throws Exception {
+        return createTree(path, 0, working);
+    }
+
+    public static String createTree(String path, int tempCount, boolean working) throws Exception {
         Path parameterPath = Path.of(path);
         // Stream<Path> streamOne = Files.walk(parameterPath);
         // for (Path p : (Iterable<Path>) streamOne::iterator) {
@@ -174,6 +183,9 @@ public class Git {
             if (checkPath(path, dsStr)) {
                 continue;
             }
+            if (working && notInIndex(p)) {
+                continue;
+            }
             if (Files.isDirectory(p)) {
                 tempCount++;
                 String workingSha = createTree(p.toString(), tempCount);
@@ -188,13 +200,19 @@ public class Git {
                 }
                 Files.writeString(treePath, "blob " + generateShaOne(p.toString()) + " " + p.toString(),
                         StandardOpenOption.APPEND);
-                createBlob(p.toString());
+                if (!working) {
+                    createBlob(p.toString());
+                }
             }
         }
         // streamOne.close();
         streamTwo.close();
         String shaOne = generateShaOne(treePath.toString());
-        Files.move(treePath, Path.of("git/objects/" + shaOne));
+        try {
+            Files.move(treePath, Path.of("git/objects/" + shaOne));
+        } catch (FileAlreadyExistsException e) {
+            Files.delete(treePath);
+        }
         return shaOne;
     }
 
@@ -205,6 +223,15 @@ public class Git {
         } catch (StringIndexOutOfBoundsException e) {
             return false;
         }
+    }
+
+    public static boolean notInIndex(Path path) throws IOException {
+        List<String> entireIndex = Files.readAllLines(Path.of("git/index"));
+        String all = "";
+        for (String s : entireIndex) {
+            all = all.concat(s);
+        }
+        return (all.indexOf(path.toString()) == -1);
     }
 
     public static boolean generateWorkingList() throws Exception {
@@ -231,13 +258,20 @@ public class Git {
         //         Files.writeString(p, "\n", StandardOpenOption.APPEND);
         //     }
         //     Files.writeString(p, s, StandardOpenOption.APPEND);
-        // }
+        //
         List<String> all = Files.readAllLines(Path.of("git/index"));
-        String first = all.get(0);
+        String first;
+        if (all.size() != 0) {
+            first = all.get(0);
+        } else {
+            return false;
+        }
         first = first.substring(first.indexOf(" ") + 1, first.indexOf("/"));
         Path p = Path.of("git/objects/workinglist");
         Files.createFile(p);
-        Files.writeString(p, "tree " + createTree(first) + " (root)");
+        Files.writeString(p, "tree " + createTree(first, true) + " " + first);
+        String shaOne = generateShaOne("git/objects/workinglist");
+        Files.writeString(p, "tree " + shaOne + " (root)");
         return true;
     }
 
