@@ -18,8 +18,8 @@ public class StretchTester {
         // System.out.println(resetAidenPriscillaBlob());
         // Git.fullReset();
         // Git.createTree("nfl");
-        Git.generateWorkingList();
-        // System.out.println(Git.readFile("git/objects/workinglist"));
+        // Git.generateWorkingList();
+        System.out.println(Git.readFile("git/objects/workinglist"));
     }
 
     public static boolean verify() {
